@@ -492,6 +492,10 @@ void ServerEvents::OnSetBattleInfo( int battleid, const wxString& param, const w
 							 	 }
 							 }
             }
+            else if ( key.Left( 8 ) == _T( "hosttype" ) )
+            {
+				battle.SetAuthostType(value);
+            }
             else
             {
                 battle.CustomBattleOptions().setSingleOption( STD_STRING(key), STD_STRING(value), LSL::OptionsWrapper::EngineOption );

@@ -32,37 +32,37 @@ SpringieHandler::~SpringieHandler()
 
 }
 
-void SpringieHandler::Balance()
+void SpringieHandler::Balance() const
 {
     m_battle->Say(_T("!balance"));
 }
 
-void SpringieHandler::SetRandomMap()
+void SpringieHandler::SetRandomMap() const
 {
     m_battle->Say(_T("!map"));
 }
 
-void SpringieHandler::SetMap(const wxString& map)
+void SpringieHandler::SetMap(const wxString& map) const
 {
     m_battle->Say(_T("!map ")+map);
 }
 
-void SpringieHandler::ClearStartBoxes()
+void SpringieHandler::ClearStartBoxes() const
 {
     m_battle->Say(_T("!clear")); /// will check
 }
 
-void SpringieHandler::AddStartBox(int posx,int posy,int w,int h)
+void SpringieHandler::AddStartBox(int posx,int posy,int w,int h) const
 {
     m_battle->Say(wxString::Format(wxT("!addbox %i %i %i %i"),posx,posy,w,h));
 }
 
-void SpringieHandler::Notify()
+void SpringieHandler::Notify() const
 {
     m_battle->Say(_T("!notify"));
 }
 
-void SpringieHandler::Start()
+void SpringieHandler::Start() const
 {
     m_battle->Say(_T("!start"));
 }
@@ -82,37 +82,37 @@ SpadsHandler::~SpadsHandler()
 
 }
 
-void SpadsHandler::Balance()
+void SpadsHandler::Balance() const
 {
     m_battle->Say(_T("!balance"));
 }
 
-void SpadsHandler::SetRandomMap()
+void SpadsHandler::SetRandomMap() const
 {
     m_battle->Say(_T("!map 1")); //not so random
 }
 
-void SpadsHandler::SetMap(const wxString& map)
+void SpadsHandler::SetMap(const wxString& map) const
 {
     m_battle->Say(_T("!map ")+map);
 }
 
-void SpadsHandler::ClearStartBoxes()
+void SpadsHandler::ClearStartBoxes() const
 {
 
 }
 
-void SpadsHandler::AddStartBox(int /*posx*/,int /*posy*/,int /*w*/,int /*h*/)
+void SpadsHandler::AddStartBox(int /*posx*/,int /*posy*/,int /*w*/,int /*h*/) const
 {
 
 }
 
-void SpadsHandler::Notify()
+void SpadsHandler::Notify() const
 {
     m_battle->Say(_T("!notify"));
 }
 
-void SpadsHandler::Start()
+void SpadsHandler::Start() const
 {
     m_battle->Say(_T("!start"));
 }
@@ -138,7 +138,7 @@ void AutohostManager::SetBattle(Battle* battle)
     m_type=AutohostManager::AUTOHOSTTYPE_NONE;
 }
 
-AutohostHandler& AutohostManager::GetAutohostHandler()
+const AutohostHandler& AutohostManager::GetAutohostHandler() const
 {
     switch(m_type)
     {
@@ -153,12 +153,12 @@ AutohostHandler& AutohostManager::GetAutohostHandler()
     return m_emptyhandler;
 }
 
-SpringieHandler& AutohostManager::GetSpringie()
+const SpringieHandler& AutohostManager::GetSpringie() const
 {
     return m_springie;
 }
 
-SpadsHandler& AutohostManager::GetSpads()
+const SpadsHandler& AutohostManager::GetSpads() const
 {
     return m_spads;
 }
@@ -167,6 +167,22 @@ bool AutohostManager::RecnognizeAutohost()
 {
     m_type=AutohostManager::AUTOHOSTTYPE_UNKNOWN;
     return false;
+}
+
+bool AutohostManager::RecnognizeAutohost(const wxString& game_hosttype_val)
+{
+	if(game_hosttype_val==_T("SPADS"))
+	{
+		m_type=AutohostManager::AUTOHOSTTYPE_SPADS;
+		return true;
+	}
+	else if(game_hosttype_val==_T("SPRINGIE"))
+	{
+		m_type=AutohostManager::AUTOHOSTTYPE_SPRINGIE;
+		return true;
+	}
+
+	return false;
 }
 
 bool AutohostManager::RecnognizeAutohost(const wxString& who, const wxString& message)
@@ -198,7 +214,7 @@ bool AutohostManager::RecnognizeAutohost(const wxString& who, const wxString& me
     return false;
 }
 
-AutohostManager::AutohostType AutohostManager::GetAutohostType()
+AutohostManager::AutohostType AutohostManager::GetAutohostType() const
 {
     return m_type;
 }

@@ -12,13 +12,13 @@ class AutohostHandler
         AutohostHandler();
         virtual ~AutohostHandler();
 
-        virtual void Balance(){};
-        virtual void SetRandomMap(){};
-        virtual void SetMap(const wxString& /*map*/){};
-        virtual void ClearStartBoxes(){};
-        virtual void AddStartBox(int /*posx*/,int /*posy*/,int /*w*/,int /*h*/){};
-        virtual void Notify(){};
-        virtual void Start(){};
+        virtual void Balance() const {};
+        virtual void SetRandomMap() const {};
+        virtual void SetMap(const wxString& /*map*/) const {};
+        virtual void ClearStartBoxes() const {};
+        virtual void AddStartBox(int /*posx*/,int /*posy*/,int /*w*/,int /*h*/) const {};
+        virtual void Notify() const {};
+        virtual void Start() const {};
     protected:
         Battle* m_battle;
 
@@ -35,13 +35,13 @@ class SpringieHandler: public AutohostHandler
         SpringieHandler();
         ~SpringieHandler();
 
-        void Balance();
-        void SetRandomMap();
-        void SetMap(const wxString& map);
-        void ClearStartBoxes();
-        void AddStartBox(int posx,int posy,int w,int h);
-        void Notify();
-	void Start();
+        void Balance() const ;
+        void SetRandomMap() const ;
+        void SetMap(const wxString& map) const ;
+        void ClearStartBoxes() const ;
+        void AddStartBox(int posx,int posy,int w,int h) const ;
+        void Notify() const ;
+		void Start() const ;
 };
 
 class SpadsHandler: virtual public AutohostHandler
@@ -50,13 +50,13 @@ class SpadsHandler: virtual public AutohostHandler
         SpadsHandler();
         ~SpadsHandler();
 
-        void Balance();
-        void SetRandomMap();
-        void SetMap(const wxString& map);
-        void ClearStartBoxes();
-        void AddStartBox(int posx,int posy,int w,int h);
-        void Notify();
-        void Start();
+        void Balance() const ;
+        void SetRandomMap() const ;
+        void SetMap(const wxString& map) const ;
+        void ClearStartBoxes() const ;
+        void AddStartBox(int posx,int posy,int w,int h) const ;
+        void Notify() const ;
+        void Start() const ;
 };
 
 class AutohostManager
@@ -77,14 +77,15 @@ class AutohostManager
         void SetBattle(Battle* bt);
 
         bool RecnognizeAutohost();
+		bool RecnognizeAutohost(const wxString& game_hosttype_val);
         bool RecnognizeAutohost(const wxString& who, const wxString& message);
 
-        AutohostType GetAutohostType();
+        AutohostType GetAutohostType() const ;
 
-        AutohostHandler& GetAutohostHandler();
+        const AutohostHandler& GetAutohostHandler() const ;
 
-        SpringieHandler& GetSpringie();
-        SpadsHandler& GetSpads();
+        const SpringieHandler& GetSpringie() const ;
+        const SpadsHandler& GetSpads() const ;
     private:
         SpringieHandler m_springie;
         SpadsHandler m_spads;

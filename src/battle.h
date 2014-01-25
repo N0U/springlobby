@@ -4,6 +4,7 @@
 #include <set>
 
 #include "hosting/autohost.h"
+#include "hosting/autohostmanager.h"
 #include "ibattle.h"
 
 class Ui;
@@ -109,6 +110,12 @@ class Battle : public IBattle
 
 	void SetAutoUnspec(bool value);
 	bool GetAutoUnspec() { return m_auto_unspec; }
+
+	void SetAuthostType(const wxString &val);
+	inline const AutohostManager& getAutohostManager(){return m_autohost_manager;}
+	inline const AutohostHandler& getAutohostHandler(){return m_autohost_manager.GetAutohostHandler();}
+
+
 private:
 	void ShouldAutoUnspec();
 
@@ -122,6 +129,8 @@ private:
 
     Server& m_serv;
     AutoHost m_ah;
+    AutohostManager m_autohost_manager;
+
     bool m_autolock_on_start;
 
     const int m_id;

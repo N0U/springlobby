@@ -43,6 +43,7 @@ Battle::Battle( Server& serv, int id ) :
 {
 	ConnectGlobalEvent(this, GlobalEvent::OnUnitsyncReloaded, wxObjectEventFunction(&Battle::OnUnitsyncReloaded));
     m_opts.battleid =  m_id;
+    m_autohost_manager.SetBattle(this);
 }
 
 
@@ -1185,3 +1186,7 @@ void Battle::SetAutoUnspec(bool value)
 	ShouldAutoUnspec();
 }
 
+void Battle::SetAuthostType(const wxString &val)
+{
+	m_autohost_manager.RecnognizeAutohost(val);
+}

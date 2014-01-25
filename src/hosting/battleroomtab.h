@@ -125,8 +125,6 @@ class BattleRoomTab : public wxScrolledWindow, public GlobalEvent
 		void UpdateMyInfo();
 
 	protected:
-        AutohostManager autohostManager;
-
 		long AddMMOptionsToList( long pos, LSL::OptionsWrapper::GameOption optFlag );
 
 		void SplitSizerHorizontally( const bool horizontal );
