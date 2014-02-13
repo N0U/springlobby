@@ -6,12 +6,12 @@
 #include "ui.h"
 #include "server.h"
 #include "user.h"
-#include "utils/misc.h"
 #include "utils/debug.h"
 #include "utils/conversion.h"
 #include <lslutils/misc.h>
 #include "utils/uievents.h"
 #include "utils/battleevents.h"
+#include "utils/slpaths.h"
 #include "uiutils.h"
 #include "settings.h"
 #include "useractions.h"
@@ -618,7 +618,7 @@ void Battle::StartHostedBattle()
 					wxString hostscript = spring().WriteScriptTxt( *this );
 					try
 					{
-						wxString path = sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + _T("relayhost_script.txt");
+						wxString path = SlPaths::GetDataDir() + wxFileName::GetPathSeparator() + _T("relayhost_script.txt");
 						if ( !wxFile::Access( path, wxFile::write ) ) {
 								wxLogError( _T("Access denied to script.txt.") );
 						}

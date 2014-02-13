@@ -2,6 +2,7 @@
 //
 // Classes: NetDebugReport CrashReport
 //
+#include "utils/curlhelper.h" // has to be first, else compiler will warn about "please include winsock2.h before windows.h"
 #include "crashreport.h"
 
 #if wxUSE_DEBUGREPORT && defined(ENABLE_DEBUG_REPORT)
@@ -17,10 +18,10 @@
 #include <wx/sstream.h>
 #include <wx/utils.h>
 
-#include "utils/curlhelper.h"
 #include "utils/platform.h"
 #include "updater/updatehelper.h"
 #include "utils/conversion.h"
+#include "utils/slpaths.h"
 #include "settings.h"
 #include "stacktrace.h"
 
@@ -107,7 +108,7 @@ bool NetDebugReport::OnServerReply( const wxArrayString& reply )
 
 void SpringDebugReport::AddVFSFile( const wxString& fn, const wxString& id )
 {
-	const wxString file = sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + fn;
+	const wxString file = SlPaths::GetDataDir() + wxFileName::GetPathSeparator() + fn;
 	if (wxFile::Exists(file)) {
 		AddFile(file , id);
 	}
@@ -118,7 +119,7 @@ SpringDebugReport::SpringDebugReport()
 	: NetDebugReport( "http://infologs.springrts.com/upload" )
 {
 	wxString tmp_filename = wxPathOnly( wxFileName::CreateTempFileName(_T("dummy")) ) + wxFileName::GetPathSeparator() + _T("settings.txt");
-	wxCopyFile( sett().GetCurrentUsedSpringConfigFilePath(), tmp_filename );
+	wxCopyFile( SlPaths::GetSpringConfigFilePath(), tmp_filename );
 	AddFile( tmp_filename, _T("Settings") );
 
 	AddVFSFile( _T("infolog.txt"),		_T("Infolog") );
@@ -159,7 +160,7 @@ SpringDebugReport::SpringDebugReport()
 #if wxUSE_STD_IOSTREAM
 	report->AddText( _T( "AppLog.txt" ), TowxString( crashlog.str() ), _( "Application verbose log" ) );
 #endif
-    wxString script_file = sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
+    wxString script_file = SlPaths::GetDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
     if ( wxFile::Exists( script_file ) )
         report->AddFile( script_file, _( "Last generated spring launching script" ) );
 

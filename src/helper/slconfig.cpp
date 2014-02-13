@@ -2,6 +2,7 @@
 
 #include <wx/wfstream.h>
 #include <wx/log.h>
+#include <wx/filename.h>
 
 #include "../utils/debug.h"
 #include "../utils/slpaths.h"
@@ -34,8 +35,26 @@ slConfig::slConfig( wxInputStream& in, const wxMBConv& conv ):
 slConfig* slConfig::Create()
 {
 	m_chosen_path = SlPaths::GetConfigPath();
-	wxFileInputStream instream( slConfig::m_chosen_path );
 
+	// make sure config file & dir is created/writeable when not exists
+	wxString configDir;
+	wxFileName::SplitPath(m_chosen_path, &configDir, NULL, NULL);
+	if (!wxFileName::DirExists(configDir)) {
+		if  (!wxMkdir(configDir)) {
+			wxLogError(_T("unable to create config dir"));
+			exit(-1);
+		}
+	}
+	if (!wxFileName::FileExists(m_chosen_path)){
+		wxFileOutputStream outstream(m_chosen_path);
+		if (!outstream.IsOk()) {
+			wxLogError(_T("unable to create config file"));
+			exit(-1);
+		}
+	}
+
+
+	wxFileInputStream instream( slConfig::m_chosen_path );
 	if ( !instream.IsOk() ) {
 		wxLogError( _T( "unable to use config file" ) );
 		exit( -1 );
@@ -127,24 +146,24 @@ void Default<T>::Set(const wxString& key, const T& defValue) {
 }
 
 
-wxString& slConfig::ReadString(const wxString& key) const
+wxString slConfig::ReadString(const wxString& key) const
 {
 	// read a value with preset default
 	// this will return a valid value or fail loudly
 	// 1. read the default value to make sure it is set
 	// 2. read current value, if set
-	wxString* value = NULL;
-	GetDefaultsString().Get(key, *value);
+	wxString value;
+	GetDefaultsString().Get(key, value);
 
 	// Read() without default (third parameter) will change value if
 	// set, or leave it alone
-	slConfigBaseType::Read( key, value );
+	slConfigBaseType::Read( key, &value );
 
 	// we can assert that value will be valid or the program terminated
 	if (IsRecordingDefaults()) {
-		((slConfig*)this)->Write(key, *value);
+		((slConfig*)this)->Write(key, value);
 	}
-	return *value;
+	return value;
 }
 
 long slConfig::ReadLong(const wxString& key) const
@@ -219,6 +238,10 @@ unsigned int slConfig::GetGroupCount( const wxString& base_key )
 
 slConfigDefault::slConfigDefault(const wxString& key, const wxString& defVal) {
 	slConfig::GetDefaultsString().Set(key, defVal);
+}
+
+slConfigDefault::slConfigDefault(const wxString& key, const char* defVal) {
+	slConfig::GetDefaultsString().Set(key, wxString::FromUTF8(defVal));
 }
 
 slConfigDefault::slConfigDefault(const wxString& key, const long& defVal) {

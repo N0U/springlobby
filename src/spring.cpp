@@ -38,6 +38,7 @@ lsl/spring/spring.cpp
 #include "utils/customdialogs.h"
 #include "utils/debug.h"
 #include "utils/conversion.h"
+#include "utils/slpaths.h"
 #include "settings.h"
 #include "battle.h"
 #include "singleplayerbattle.h"
@@ -46,6 +47,8 @@ lsl/spring/spring.cpp
 
 #include <lslutils/globalsmanager.h>
 #include <lslutils/conversion.h>
+
+SLCONFIG("/Spring/Safemode", false, "launch spring in safemode");
 
 BEGIN_EVENT_TABLE( Spring, wxEvtHandler )
 
@@ -84,7 +87,7 @@ bool Spring::IsRunning() const
 bool Spring::Run( Battle& battle )
 {
 
-  wxString path = sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
+  wxString path = SlPaths::GetDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
 
   try
   {
@@ -129,7 +132,7 @@ bool Spring::Run( Battle& battle )
 bool Spring::Run( SinglePlayerBattle& battle )
 {
 
-  wxString path = sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
+  wxString path = SlPaths::GetDataDir() + wxFileName::GetPathSeparator() + _T("script.txt");
 
   try
   {
@@ -172,39 +175,44 @@ bool Spring::LaunchSpring(const wxString& engineName, const wxString& engineVers
     wxLogError( _T("Spring already running!") );
     return false;
   }
-	const wxString executable = sett().GetSpringBinary(engineVersion);
+	const wxString executable = SlPaths::GetSpringBinary(engineVersion);
     if ( !wxFile::Exists(executable) ) {
         customMessageBoxNoModal( SL_MAIN_ICON, _T("The spring executable was not found at the set location, please re-check."), _T("Executable not found") );
         ui().mw().ShowConfigure( MainWindow::OPT_PAGE_SPRING );
         return false;
     }
 
-  wxString cmd = _T("\"") + executable;
-  #ifdef __WXMAC__
-    wxChar sep = wxFileName::GetPathSeparator();
-	if ( sett().GetCurrentUsedSpringBinary().AfterLast(_T('.')) == _T("app") )
-        cmd += sep + wxString(_T("Contents")) + sep + wxString(_T("MacOS")) + sep + wxString(_T("spring")); // append app bundle inner path
-  #endif
-	cmd += _T("\" ") + params;
+	wxString cmd = _T("\"") + executable;
+#ifdef __WXMAC__
+	wxChar sep = wxFileName::GetPathSeparator();
+	if ( SlPaths::GetCurrentUsedSpringBinary().AfterLast(_T('.')) == _T("app") )
+	cmd += sep + wxString(_T("Contents")) + sep + wxString(_T("MacOS")) + sep + wxString(_T("spring")); // append app bundle inner path
+#endif
+	cmd += _T("\" ");
+	if (cfg().ReadBool(_T( "/Spring/Safemode" ))) {
+		cmd+=_T("--safemode ");
+	}
+	cmd += params;
 
-  wxLogMessage( _T("spring call params: %s"), cmd.c_str() );
+	wxLogMessage( _T("spring call params: %s"), cmd.c_str() );
+	wxSetWorkingDirectory( SlPaths::GetDataDir() );
 
-  wxSetWorkingDirectory( sett().GetCurrentUsedDataDir() );
-  if ( sett().UseOldSpringLaunchMethod() )
-  {
-    if ( m_wx_process == 0 ) m_wx_process = new wxSpringProcess( *this );
-    if ( wxExecute( cmd , wxEXEC_ASYNC, m_wx_process ) == 0 ) return false;
-  }
-  else
-  {
-    if ( m_process == 0 ) m_process = new SpringProcess( *this );
-    m_process->Create();
-    m_process->SetCommand( cmd );
-    m_process->Run();
-  }
-  m_running = true;
+	if ( sett().UseOldSpringLaunchMethod() ) {
+		if ( m_wx_process == NULL ) {
+			m_wx_process = new wxSpringProcess( *this );
+		}
+		if ( wxExecute( cmd , wxEXEC_ASYNC, m_wx_process ) == 0 ) {
+			return false;
+		}
+	} else {
+		if ( m_process == 0 ) m_process = new SpringProcess( *this );
+		m_process->Create();
+		m_process->SetCommand( cmd );
+		m_process->Run();
+	}
+	m_running = true;
 	GlobalEvent::Send(GlobalEvent::OnSpringStarted);
-  return true;
+	return true;
 }
 
 void Spring::OnTerminated( wxCommandEvent& event )

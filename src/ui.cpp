@@ -31,6 +31,7 @@
 #include "utils/debug.h"
 #include "utils/conversion.h"
 #include "utils/uievents.h"
+#include "utils/slpaths.h"
 #include "updater/updatehelper.h"
 #include "uiutils.h"
 #include "chatpanel.h"
@@ -58,7 +59,6 @@
 #include <lslutils/globalsmanager.h>
 #include <lslunitsync/c_api.h>
 #include <lslunitsync/springbundle.h>
-#include "utils/misc.h"
 #include "textentrydialog.h"
 
 SLCONFIG("/General/AutoUpdate", true, "Determines if springlobby should check for updates on startup");
@@ -529,14 +529,14 @@ bool Ui::IsSpringCompatible(const wxString& engine, const wxString& version)
 	assert(engine == _T("spring"));
 	if ( sett().GetDisableSpringVersionCheck() ) return true;
 	const std::string neededversion = STD_STRING(version);
-	const auto versionlist = sett().GetSpringVersionList();
+	const auto versionlist = SlPaths::GetSpringVersionList();
 	for ( const auto pair : versionlist ) {
 		const wxString ver = pair.first;
 		const LSL::SpringBundle bundle = pair.second;
 		if ( VersionSyncCompatible(neededversion, STD_STRING(ver))) {
-			if ( sett().GetCurrentUsedSpringIndex() != ver ) {
+			if ( SlPaths::GetCurrentUsedSpringIndex() != ver ) {
 				wxLogMessage(_T("server enforce usage of version: %s, switching to profile: %s"), ver.c_str(), ver.c_str());
-				sett().SetUsedSpringIndex( ver );
+				SlPaths::SetUsedSpringIndex( ver );
 				LSL::usync().ReloadUnitSyncLib();
 			}
 			return true;
@@ -556,10 +556,6 @@ void Ui::OnLoggedIn( )
 {
 	if ( m_main_win == 0 ) return;
 	mw().GetChatTab().RejoinChannels();
-	// FIXME RejoinChannels changes active tab, we change back to
-	// default tab on auto connect
-	if ( cfg().ReadBool(_T( "/Server/Autoconnect" )) )
-		mw().ShowTab( cfg().ReadLong(_T( "/GUI/StartTab" )));
 	mw().GetBattleListTab().SortBattleList();
 }
 
@@ -1127,7 +1123,7 @@ bool Ui::OnPresetRequiringMap( const wxString& mapname )
 
 void Ui::OpenFileInEditor( const wxString& filepath )
 {
-	wxString editor_path = sett().GetEditorPath( );
+	wxString editor_path = SlPaths::GetEditorPath( );
 	if ( editor_path == wxEmptyString ) {
 		customMessageBoxNoModal( SL_MAIN_ICON, _T("You have not chosen an external text editor to open files with.\nPlease Select one now."), _T("No editor set") );
 		mw().ShowConfigure( MainWindow::OPT_PAGE_GENERAL );
@@ -1160,37 +1156,18 @@ void Ui::OnInit()
 
 void Ui::FirstRunWelcome()
 {
-#ifdef __WXMSW__
-	sett().SetOldSpringLaunchMethod( true );
-#endif
-
 	wxLogMessage( _T("first time startup"));
-	wxMessageBox( wxFormat( _("Hi %s,\nIt looks like this is your first time using %s. I have guessed a configuration that I think will work for you but you should review it, especially the Spring configuration.") )
-				  % wxGetUserName()
-				  % GetAppName(),
-				  _("Welcome"),
-				  wxOK | wxICON_INFORMATION, &mw() );
-
-	// copy uikeys.txt
-	wxPathList pl;
-	pl.AddEnvList( _T("%ProgramFiles%") );
-	pl.AddEnvList( _T("XDG_DATA_DIRS") );
-	pl = PathlistFactory::AdditionalSearchPaths( pl );
-	wxString uikeyslocation = pl.FindValidPath( _T("uikeys.txt") );
-	if ( !uikeyslocation.IsEmpty() ) {
-		wxCopyFile( uikeyslocation, sett().GetCurrentUsedDataDir() + wxFileName::GetPathSeparator() + _T("uikeys.txt"), false );
-	}
 
 	//this ensures that for new configs there's a default perspective to fall back on
 	mw().SavePerspectives( _T("SpringLobby-default") );
-	mw().ShowConfigure();
+	ShowConnectWindow();
 }
 
 void Ui::CheckForUpdates()
 {
 	wxString latestVersion = GetLatestVersion();
 
-	if (latestVersion == _T("-1")) {
+	if (latestVersion.empty()) {
 		customMessageBoxNoModal(SL_MAIN_ICON, _("There was an error checking for the latest version.\nPlease try again later.\nIf the problem persists, please use Help->Report Bug to report this bug."), _("Error"));
 		return;
 	}

@@ -43,16 +43,17 @@
 #include "downloader/prdownloader.h"
 #include "updater/updater.h"
 #include <lslutils/globalsmanager.h>
+#include <lslutils/config.h>
 #include "gui/notificationmanager.h"
 #include "helper/wxTranslationHelper.h"
 #include "playback/playbacktraits.h"
 #include "playback/playbacktab.h"
 #include "defines.h"
 #include "utils/slpaths.h"
+#include "downloader/lib/src/FileSystem/FileSystem.h"
 
 #include <wx/debugrpt.h>
 #include <wx/intl.h>
-#include "utils/misc.h"
 
 #if wxUSE_UNIX
 	#include <X11/Xlib.h>
@@ -126,9 +127,6 @@ bool SpringLobbyApp::OnInit()
 	if ( !wxDirExists( GetConfigfileDir() ) )
 		wxMkdir( GetConfigfileDir() );
 
-	sett().SetSpringBinary( sett().GetCurrentUsedSpringIndex(), sett().GetCurrentUsedSpringBinary() );
-	sett().SetUnitSync( sett().GetCurrentUsedSpringIndex(), sett().GetCurrentUsedUnitSync() );
-
 	if ( cfg().ReadBool(_T("/ResetLayout")) ) {
 		//we do this early on and reset the config var a little later so we can save a def. perps once mw is created
 		sett().RemoveLayouts();
@@ -136,9 +134,26 @@ bool SpringLobbyApp::OnInit()
 		ui().mw().SavePerspectives( _T("SpringLobby-default") );
 	}
 
+	if (SlPaths::IsPortableMode()) {
+		// change write path for downloader if in portable mode
+		fileSystem->setWritePath(STD_STRING(GetExecutableFolder()));
+	} else {
+		// only search if not in portable mode
+		SlPaths::SetSpringBinary( SlPaths::GetCurrentUsedSpringIndex(), SlPaths::GetSpringBinary() );
+		SlPaths::SetUnitSync( SlPaths::GetCurrentUsedSpringIndex(), SlPaths::GetUnitSync() );
+	}
+
+	// configure unitsync paths before trying to load
+	LSL::Util::config().ConfigurePaths(
+		boost::filesystem::path(STD_STRING(SlPaths::GetCachePath())),
+		boost::filesystem::path(STD_STRING(SlPaths::GetUnitSync())),
+		boost::filesystem::path(STD_STRING(SlPaths::GetSpringBinary()))
+	);
+
 	//unitsync first load, NEEDS to be blocking
-	sett().RefreshSpringVersionList();
-	const bool usync_loaded = LSL::usync().ReloadUnitSyncLib();
+	SlPaths::RefreshSpringVersionList();
+	LSL::usync().ReloadUnitSyncLib();
+
 
 	sett().Setup(m_translationhelper);
 
@@ -244,8 +259,8 @@ bool SpringLobbyApp::OnCmdLineParsed(wxCmdLineParser& parser)
         m_crash_handle_disable = parser.Found(_T("no-crash-handler"));
 
         // TODO make sure this is called before settings are accessed
-        SlPaths::m_user_defined_config = parser.Found( _T("config-file"), &SlPaths::m_user_defined_config_path );
-        if ( SlPaths::m_user_defined_config ) {
+        const bool userconfig = parser.Found( _T("config-file"), &SlPaths::m_user_defined_config_path );
+        if (userconfig) {
              wxFileName fn ( SlPaths::m_user_defined_config_path );
              if ( ! fn.IsAbsolute() ) {
                  wxLogError ( _T("path for parameter \"config-file\" must be absolute") );
